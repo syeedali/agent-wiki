@@ -11,6 +11,9 @@
 - [x] loops-factory — designs/wires gated loops, T3 (seed) → .claude/agents/loops-factory.md
 - [x] fleet-warden — read-only auditor, T3 (seed) → .claude/agents/fleet-warden.md
 
+- [x] concierge — front door (v1 "Nous Girl"), T2 writes-injections-only; hand-built by human session → .claude/agents/concierge.md
+  <!-- goop: fable-5-seed @ 2026-07-11 · retroactive record per warden audit #2 -->
+
 ## [LOOPS] items
 - [ ] warden-weekly — fleet-warden audit on a weekly schedule; design drafted, AWAITING `[approved]` from human
 - [ ] context-daily — context-factory tick once daily against new session notes; AWAITING `[approved]` from human

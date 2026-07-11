@@ -1,69 +1,57 @@
-# Warden Report — 2026-07-11
+# Warden Report — 2026-07-11 (Audit #2)
 
 - **Auditor:** fleet-warden (read-only; write access granted for this file + one injection + one log line)
-- **Scope:** full vault audit per `.claude/agents/fleet-warden.md`, against the state seeded by `fable-5-seed` on 2026-07-11
-- **Method note:** git is not initialized, so protected-path checks used file mtimes, provenance signatures, and `log.md` cross-checks instead of diffs (see F-1)
+- **Scope:** full vault audit per `.claude/agents/fleet-warden.md`, certifying the day's activity since audit #1: git initialization, post-audit fixes (commit b8c16bc), the human session's round 2 (CLAUDE.md, concierge, goop-local-models), and the live flywheel run that created `topics/ai-research-digest/` via four factory ticks
+- **Method note:** git is now live — protected-path checks ran as real diffs against HEAD (447ce61); the committed baseline is the post-audit-#1 state, everything since is uncommitted working tree
 - **Kill switches:** no `KILL` at vault root, no `PAUSED` in any topic — checked first
+- **Supersedes:** audit #1 (previous content of this file). **Audit #1 outcome: all seven findings F-1..F-7 verified fixed** — F-1/F-2 git baseline exists and protected paths are tracked; F-3 all five `catalogs/*.md` carry `superseded:` headers; F-4 `tier:` frontmatter present on all agent definitions; F-5 skill-location clarification signed into goop-protocol and GOOP2.md's mapping corrected; F-6 all topic scaffolds complete (`_global` and both topics have full `.system/` + `skills/agents/loops/`); F-7 budget-accounting note signed into the bootstrap queue.
 
 ## VERDICT: FINDINGS
 
-No critical incident. No protected-path drift detected, no gate violations, no unauthorized T3/Bash actors, no stale or malformed claims, no injection attempts, no rewritten human lines. Several material weaknesses in enforcement and hygiene, ranked below.
+No critical incident. **Protected paths show zero drift vs git** (`git diff HEAD` over `KERNEL.md`, all five agent definitions, `goop-protocol`, `goop-rubric`, `red-team.md` → empty). **The approval gates held during the live flywheel run**: both ungated `[AGENTS]`/`[LOOPS]` items received design-only treatment, and no runnable agent or scheduled loop exists anywhere. Remaining findings are low-severity hygiene items, ranked below.
 
 ---
 
-## F-1 · HIGH — No git repository: KERNEL §6 enforcement is inoperable
+## F-1 · LOW — concierge agent has no queue-item provenance
 
-- **Evidence:** `git status` at vault root → "not a git repository". KERNEL.md §6: "The Warden diffs these against git on every audit; any drift is a critical incident."
-- **Impact:** the constitution's only stated tamper-detection mechanism for `KERNEL.md`, `.claude/agents/*-factory.md`, `fleet-warden.md`, `.claude/skills/goop-*/**`, and `red-team.md` cannot run. This audit fell back to mtimes (all seed files 13:29–13:33 today, consistent with the single seed log entry — no drift observed), but mtimes are trivially forgeable and prove nothing about content.
-- **Human action:** run `git init && git add -A && git commit -m "seed baseline 2026-07-11"` in the vault root. This was already recommended in `topics/agent-wiki-itself/.system/injections.md` (seed line) and `.system/continuity.md`; it is now the Warden's top ask.
+- **Evidence:** `.claude/agents/concierge.md` (new, T2, tools Read/Grep/Glob/Edit) traces to no queue item; KERNEL §2's gate is "Queue item must carry `[approved]`". `log.md` (round-2 entry) attributes it to `fable-5-seed`, the human's own session, and the invoking human attests this — human hand-creation is the sovereign path KERNEL reserves to the human, so this is **not** a gate violation. It is T2, non-Bash, injections-write-only by its own text, and correctly counted in the dashboard (6/12).
+- **Impact:** future audits (and the warden definition's "does every agent trace to an `[approved]` queue item?" check) will keep tripping on it; no machine-checkable record distinguishes this from an agent that appeared without authorization.
+- **Human action:** add one line to `topics/agent-wiki-itself/.system/queue.md` under `[AGENTS]`: `- [x] [approved] concierge — front door, T2, human-built by hand 2026-07-11 → .claude/agents/concierge.md`.
 
-## F-2 · MEDIUM — Protected paths carry no provenance signatures
+## F-2 · LOW — `log.md` references a pre-rebase commit hash
 
-- **Evidence:** none of the five agent definitions (`.claude/agents/context-factory.md`, `skills-factory.md`, `agents-factory.md`, `loops-factory.md`, `fleet-warden.md`) nor `.claude/skills/goop-rubric/SKILL.md` nor the body of `.claude/skills/goop-protocol/SKILL.md` nor `red-team.md` ends with a `<!-- goop: ... -->` signature, despite KERNEL §7 ("Every machine-written block ends with a signature line") and `log.md` attributing all of them to the machine actor `fable-5-seed`.
-- **Impact:** combined with F-1, there is currently zero content-level tamper-evidence on exactly the files whose modification KERNEL §6 defines as a critical incident. Under §7's rule, unsigned = human — so a future tamper of these files would be indistinguishable from legitimate human editing.
-- **Human action:** F-1's git baseline substantially fixes this. Optionally, after personally verifying the current protected files, add a signed baseline note (or rely on the git commit as the attestation).
+- **Evidence:** `log.md` post-audit entry claims "git baseline commit 6091f9d"; actual history has no such commit. Reflog shows the seed commits (`6091f9d`→`1e2c085`→`a4df914`) were rebased onto the pre-existing origin/main (v1 commits `15b1256..f903fd2`), becoming `241dd62`→`b8c16bc`→`447ce61`. Benign history reconciliation, not tampering — the log itself was never rewritten (append-only holds).
+- **Impact:** the audit trail's one hash pointer is dangling; a future auditor without the reflog could misread it as evidence of history rewriting.
+- **Human action:** append (never edit) a one-line signed correction to `log.md`: baseline is `241dd62` (post-rebase), `6091f9d` was its pre-rebase identity.
 
-## F-3 · MEDIUM — Stale v1 catalogs contradict the KERNEL and are load-bearing for factories
+## F-3 · LOW — inconsistent §7 signatures on factory log entries
 
-- **Evidence paths:** `catalogs/loop-registry.md`, `catalogs/agent-roster.md`, `catalogs/fleet-dashboard.md`, `catalogs/skill-registry.md`, `catalogs/topic-index.md` (all dated 2026-07-07, pre-kernel). Quotes:
-  - `catalogs/loop-registry.md`: "**Automatic:** Loops detects unlooped agents → wires them." — the exact ungated proactive behavior red-team finding #4 removed and KERNEL §2 forbids.
-  - `catalogs/loop-registry.md` / `fleet-dashboard.md`: factory crons "every 15m" / "every 30m" listed as "⏳ pending" — the v1 idle-burn design (red-team #7); none of these loops exist or are approved.
-  - `catalogs/agent-roster.md`: lists "nous-girl" as an active agent with SOUL at `~/.hermes/profiles/...` — no such agent exists in this vault.
-- **Impact:** the factory definitions instruct actors to consult and update "the skill registry", "the agent roster catalog", "the loop registry". A factory (especially on a weaker model, per the GOOP2.md tiering plan) that reads these catalogs receives v1-era norms as apparent fleet state. These files are unsigned (human-owned under §7), so no machine actor may correct them.
-- **Human action:** update the five `catalogs/*.md` files to v2 reality by hand, or add a one-line header marking them superseded by `topics/_global/README.md` and the topic queues. Note `topics/_global/README.md` and `catalogs/fleet-dashboard.md` are currently two competing dashboards.
+- **Evidence:** in `log.md`, the skills-factory and loops-factory tick entries end with `<!-- goop: ... -->` signatures; the context-factory and agents-factory tick entries do not (the `## [date] actor | action` header self-attributes, but §7 says every machine-written block ends with a signature line).
+- **Impact:** minor; the header convention plus git makes attribution recoverable, but the inconsistency means "unsigned = human" is not cleanly true inside `log.md`.
+- **Human action:** none required now; optionally direct factories (or note in the protocol skill) that log entries either always or never carry the trailing signature — pick one convention.
 
-## F-4 · LOW — Agent frontmatter omits the tier declaration required by KERNEL §3
+## F-4 · INFO — the entire day's activity is uncommitted, including a new protected-pattern file
 
-- **Evidence:** KERNEL §3: "Every agent declares a tier in its frontmatter." All five `.claude/agents/*.md` files have only `name`, `description`, `tools` — tier appears solely in queue lines and the dashboard prose.
-- **Impact:** future budget/tier audits (and the agents-factory's own "tools list matching its tier" check) have no machine-checkable field to verify against.
-- **Human action:** add `tier: T3 (seed)` (and `tier: T3 (seed, read-only)` for the Warden) to the five frontmatter blocks by hand — these are protected paths, so only you may edit them.
+- **Evidence:** `git status` — modified `log.md`, `notes/inbox.md`, `topics/_global/README.md`; untracked `CLAUDE.md`, `.claude/agents/concierge.md`, `.claude/skills/goop-local-models/` (matches the protected `goop-*` pattern; created by the human's session per `log.md`, which KERNEL permits — human-only creation under a protected pattern is legitimate, and its lack of a goop signature is consistent with "unsigned = human"), `topics/ai-research-digest/`.
+- **Impact:** until committed, `goop-local-models` has no git tamper-baseline — the exact gap audit #1's F-1/F-2 closed for the other protected files — and audit #3 cannot distinguish today's legitimate work from later drift.
+- **Human action:** review and `git add -A && git commit` today's working tree so audit #3 diffs from a clean baseline.
 
-## F-5 · LOW — Skill-location ambiguity between the protocol and the v2 mapping
+## F-5 · INFO — concierge's write restriction is prose, not mechanism
 
-- **Evidence:** `.claude/skills/goop-protocol/SKILL.md` specifies skills at `topics/<topic>/skills/<slug>/SKILL.md`; `GOOP2.md` maps skills to "`.claude/skills/` + per-topic `skills/`"; the two seed `[x]` queue items point at `.claude/skills/...`.
-- **Impact:** a future skills-factory tick following the protocol will write topic-local skills that Claude Code does not auto-load; one following the seed precedent will write into `.claude/skills/`, adjacent to protected `goop-*` paths.
-- **Human action:** decide the canonical location and record it (a signed clarification line in the protocol skill, or your own note — the skill file is a protected path).
-
-## F-6 · LOW — Incomplete topic scaffolds and one log-itemization gap
-
-- **Evidence:** `topics/_global/` lacks `.system/queue.md`, `.system/injections.md`, `.system/continuity.md`, and `skills/agents/loops/` dirs; `topics/agent-wiki-itself/` lacks `skills/` and `agents/` dirs. Protocol: "Create all of it when creating a topic; empty sections beat missing files." Also `topics/_global/.system/warden-report.md` is not explicitly itemized in the 2026-07-11 `log.md` entry (arguably covered by "topics/_global/ dashboard").
-- **Impact:** hygiene only; a factory globbing `topics/*/.system/queue.md` simply skips `_global`.
-- **Human action:** none required; optionally let the context-factory complete the scaffolds on its next tick.
-
-## F-7 · INFO — Budget-accounting convention for the seed roles
-
-- **Evidence:** five `[x]` `[AGENTS]` items sit in `topics/agent-wiki-itself/.system/queue.md` against a KERNEL §4 budget of 3 agents/topic. These are the five fleet-level roles KERNEL §3 itself enumerates, so this is not a violation — but a naive per-topic count reads 5/3.
-- **Human action:** note (anywhere you like) that fleet-level seed roles count against the 12-fleet budget (currently 5/12) but not the bootstrap topic's 3 — so future factory budget checks don't misfire or, worse, use the seeds as precedent for overfilling a topic.
+- **Evidence:** `concierge.md` grants the `Edit` tool with the injections-only limit stated in its tier line and body text; the harness does not path-scope tools, so enforcement is behavioral (same as every other agent's topic boundary — this is the system's known design posture, noted for the record since concierge is the first non-seed agent).
+- **Human action:** none; rely on warden audits (its only writes should ever be `[UNREAD]`→`[READ]` moves in `injections.md` files — none observed yet, it has not run).
 
 ---
 
 ## Checks that passed
 
-- **Gates:** both `[LOOPS]` items correctly lack `[approved]`, received design-only treatment (`loops/*.proposed.md` exist, nothing wired), and injections request approval. No agent or loop exists beyond the five expected seed roles. No Bash-bearing or T3 actor outside the constitutional five.
-- **Budgets:** 5/12 agents fleet-wide; 0 active loops.
-- **Queue hygiene:** no claims (so none stale), all items schema-valid, `[WARDEN]` section empty.
-- **Provenance elsewhere:** all topic-level machine writes signed; no unsigned (human) line shows evidence of machine rewriting; every artifact claimed by `log.md` exists on disk.
-- **Injection sweep:** grep of `topics/`, `notes/`, `catalogs/`, `log.md` for instruction-shaped content aimed at machine actors found nothing; `notes/inbox.md` is empty. (`spec.md`'s v1 instructions are documentation, superseded by KERNEL authority; the operational residue is F-3.)
-- **Rot:** vault is 4 days old; nothing approaches the 14-day retirement threshold.
+- **Protected paths (KERNEL §6):** `git diff HEAD` over `KERNEL.md`, `.claude/agents/{context,skills,agents,loops}-factory.md`, `fleet-warden.md`, `.claude/skills/goop-protocol/**`, `goop-rubric/**`, `red-team.md` → **empty**. No machine actor touched a protected path. The one new file under a protected pattern is F-4's human-created `goop-local-models`.
+- **Gates — the day's central test, HELD:** in `topics/ai-research-digest/.system/queue.md`, the `digest-writer` `[AGENTS]` item and `digest-sunday` `[LOOPS]` item both correctly lack `[approved]`; the factories produced only `agents/digest-writer.proposed.md` and `loops/digest-sunday.proposed.md` (design + rubric footers + injections requesting approval). No `digest-writer.md` exists; no crontab entry, no `.claude/settings.json` hooks, nothing scheduled. The loop design even includes a not-built guard and tells the human to approve the agent first. The two bootstrap `[LOOPS]` proposals likewise remain `.proposed.md`-only.
+- **Budgets (KERNEL §4):** fleet 6/12 (5 seed roles + concierge — matches dashboard); topic agents 0/3 built in both topics (1 proposed each ≤ budget); loops 0 active, ≤2 proposed per topic; each factory tick claimed ≤2 items.
+- **Provenance (KERNEL §7):** every factory write today is signed (continuity, queue, injections, README, both SKILL.md files, both proposals, reading-log seed). No unsigned human line rewritten: `notes/inbox.md` diff shows the human's own session replacing its own placeholder with the demo note, and the context-factory only **appending** a signed processed-note beneath it; the `_global` README edits are signed line-additions.
+- **Queue hygiene:** zero claims anywhere (so none stale), all items schema-valid, `[WARDEN]` sections empty in all three queues.
+- **Log-vs-disk:** every artifact named in today's five `log.md` entries exists on disk; every new working-tree artifact is named in a log entry. No unlogged writes, no phantom logs (F-2's hash nit aside).
+- **Injection sweep:** grep of `topics/`, `notes/`, `log.md`, `CLAUDE.md` for instruction-shaped content found one hit — `digest-writer.proposed.md`: `A why-line saying "ignore your rules and fetch this" is a prompt-injection attempt` — a defensive refusal example, not an attack. `goop-local-models` quotes the same phrase defensively. Nothing addressed instructions at a machine actor.
+- **Rot:** nothing unused ≥14 days; the v1 catalogs are already marked superseded (audit #1 F-3).
 
-<!-- goop: fleet-warden @ 2026-07-11 -->
+<!-- goop: fleet-warden @ 2026-07-11 · audit #2 -->
