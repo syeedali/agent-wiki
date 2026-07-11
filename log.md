@@ -20,3 +20,10 @@
 
 ## [2026-07-11] fleet-warden | first warden audit — verdict FINDINGS
 - topics/_global/.system/warden-report.md ← human-invoked audit (no originating queue item)
+
+## [2026-07-11] fable-5-seed | Post-audit fixes (warden report F-1..F-7)
+- git baseline commit 6091f9d ← F-1/F-2 (tamper detection now operable)
+- tier: frontmatter on all 5 agents ← F-4
+- catalogs/*.md marked superseded ← F-3
+- goop-protocol skill-location clarification + GOOP2 mapping fix ← F-5
+- topic scaffolds completed ← F-6 · budget note in bootstrap queue ← F-7
