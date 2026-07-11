@@ -1,4 +1,5 @@
 ---
+superseded: true — v1 catalog kept for reference; live fleet state is topics/_global/README.md + per-topic queues (GOOP2.md, KERNEL.md govern)
 title: Agent Roster
 created: 2026-07-07
 updated: 2026-07-07
