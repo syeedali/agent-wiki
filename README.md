@@ -1,153 +1,103 @@
 ![Agent Wiki](assets/hero-agent-wiki.png)
 
-# Agent Wiki
+# Agent Wiki — GOOP v2
 
 > **A self-documenting, self-extending multi-agent system. The wiki IS the coordination layer.**
 >
-> Built on [Hermes Agent](https://github.com/NousResearch/hermes-agent) by [Nous Research](https://nousresearch.com).
-> Topics are miniature GOOP instances. Markdown is the API between human and machine.
+> Originally specced for [Hermes Agent](https://github.com/NousResearch/hermes-agent) by [Nous Research](https://nousresearch.com) —
+> now **ported to Claude Code, hardened, seeded, and running**. Markdown is the API between human and machine.
 
 ---
 
-## What is Agent Wiki?
+## Status: 🟢 Live (seeded 2026-07-11)
 
-Agent Wiki organizes a multi-agent AI fleet as **a well-organized markdown vault**. Every topic you care about gets its own directory containing the full stack:
+This started as an unrun spec (`spec.md`, the GOOP whitepaper). On 2026-07-11 it was
+ported to Claude Code and brought to life at Fable-5 quality — the "genome day" build.
+The system has already completed its first full self-referential cycle: **built →
+audited by its own immune system → patched from the audit's findings → committed.**
 
-- **Context** — what the system understands about your goal
-- **Loops** — cron jobs and workflows that run over time
-- **Agents** — AI profiles that do the work
-- **Skills** — reusable procedures agents load on demand
-
-You chat with a friendly front-door agent. The system watches your conversations, comprehends what you want, and automatically creates the agents, skills, and workflows to make it happen. Progress flows back to you naturally in conversation.
-
-**Every part of the system is a markdown file you can edit.** No config dashboards. No YAML wizards. Open the wiki, change what you want, and the system picks it up.
-
----
-
-## Quick Start
-
-```bash
-# Clone the wiki
-git clone https://github.com/SouthpawIN/agent-wiki.git ~/.hermes/wiki
-
-# Set up the front-door agent (chat surface)
-hermes profile create nous-girl
-hermes -p nous-girl config set agent.toolsets "[]"
-
-# Start the factory crons
-hermes cron create "every 30m" --name "context-factory" --prompt "..."
-hermes cron create "every 15m" --name "skills-factory" --prompt "..."
-hermes cron create "every 15m" --name "agents-factory" --prompt "..."
-hermes cron create "every 15m" --name "loops-factory" --prompt "..."
-
-# Start chatting
-hermes -p nous-girl --tui
-```
-
-→ Full setup: [[spec|Agent Wiki Specification]]
-
----
-
-## The Four Primitives
-
-![Four Primitives](assets/four-primitives.png)
-
-| Primitive | Factory | What It Is |
-|---|---|---|
-| **Context** | Context | Wiki pages — raw understanding from chat, structured into knowledge |
-| **Loops** | Loops | Cron jobs, kanban tasks — execution that runs over time |
-| **Agents** | Agents | Hermes profiles — named entities with personality, tools, and skills |
-| **Skills** | Skills | SKILL.md bundles — reusable procedures loaded on demand |
-
-Primitives nest: **Context** contains **Loops** which invoke **Agents** which load **Skills**.
-
----
-
-## The Flywheel
-
-![Flywheel](assets/flywheel.png)
-
-From idea to working system — driven entirely by markdown reads and writes:
-
-1. **Chat** — You tell Nous Girl about an idea
-2. **Comprehend** — Context reads the chat, writes wiki pages
-3. **Create** — Factories (Skills, Agents, Loops) build skills, agents, and loops
-4. **Inject** — Status flows back to Nous Girl, who tells you what happened
-
----
-
-## Topic Structure
-
-![Topic Structure](assets/topic-structure.png)
-
-Every user interest is a self-contained **topic** — its own directory with the full GOOP stack:
-
-```
-wiki/topics/<topic>/
-├── README.md              ← human dashboard
-├── .system/               ← machine coordination (hidden)
-│   ├── continuity.md      ← raw understanding
-│   ├── injections.md       ← messages for Nous Girl
-│   └── queue.md           ← pending factory work
-├── skills/                ← skills for this topic
-├── agents/                ← agents serving this topic
-└── loops/                 ← execution infrastructure
-```
-
-The `.system/` prefix hides machine internals. You CAN open them — that's the debugger. But your default experience is clean markdown dashboards.
-
----
-
-## The Factory Pipeline
-
-![Factory Pipeline](assets/factory-pipeline.png)
-
-Four cron jobs run the system. Each watches the wiki for signals and spawns work:
-
-| Factory | Watches | Produces | Uses |
-|---|---|---|---|
-| **Context** | Chat sessions | Wiki pages, queue items | `session_search()`, `write_file()` |
-| **Skills** | `[SKILLS]` queue items | SKILL.md files | `delegate_task()`, `skill_manage()` |
-| **Agents** | `[AGENTS]` queue items | Agent profiles | `delegate_task()`, `hermes profile create` |
-| **Loops** | `[LOOPS]` queue items | Cron jobs, kanban | `delegate_task()`, `cronjob()` |
-
-All factories use **the same 4-stage pipeline**: Collect evidence → Generate candidates → Evaluate → Apply.
-
----
-
-## Global Catalogs
-
-See everything at a glance. Edit anything directly:
-
-| Catalog | Shows |
+| Layer | State |
 |---|---|
-| [[catalogs/fleet-dashboard|Fleet Dashboard]] | All topics, agents, skills, loops |
-| [[catalogs/agent-roster|Agent Roster]] | Every agent → click to see SOUL, edit to change |
-| [[catalogs/skill-registry|Skill Registry]] | Every skill → click to see SKILL.md |
-| [[catalogs/loop-registry|Loop Registry]] | Every loop → edit schedule, pause |
-| [[catalogs/topic-index|Topic Index]] | Every topic with full GOOP stack |
+| **Constitution** | [KERNEL.md](KERNEL.md) — approval gates, capability tiers, budgets, kill switch, provenance rules |
+| **Factories** | 4 live Claude Code subagents: `context-factory`, `skills-factory`, `agents-factory`, `loops-factory` |
+| **Immune system** | `fleet-warden` — read-only auditor. First audit: verdict FINDINGS, all 7 findings fixed |
+| **Kernel skills** | `goop-protocol` (wire formats), `goop-rubric` (adversarial candidate judging) |
+| **Vault** | `topics/agent-wiki-itself/` (bootstrap topic) + `topics/_global/` (fleet dashboard) |
+| **Loops** | 2 designed (`warden-weekly`, `context-daily`), correctly **awaiting human `[approved]`** |
+
+Read [GOOP2.md](GOOP2.md) for the full port spec and runbook, and
+[red-team.md](red-team.md) for the security review of the original v1 spec
+(2 critical, 3 high findings — each mapped to its KERNEL patch).
 
 ---
 
-## Design Principles
+## What is this?
 
-1. **Markdown is the API** — human ↔ machine, machine ↔ machine
-2. **The wiki is the system** — no separate database or config dashboard
-3. **User-editable everything** — every understanding, queue item, status
-4. **Dot-prefix for machine internals** — `.system/` is hidden but accessible
-5. **Topics are self-contained** — each topic holds its own full GOOP stack
-6. **Factories are thin** — cron jobs that spawn one `delegate_task`
-7. **Injections keep you in the loop** — factories write to files, Nous Girl reads them
-8. **No self-edit** — factories cannot modify themselves
+Agent Wiki organizes a multi-agent AI fleet as **a markdown vault**. The database,
+config, UI, and message bus between agents are all plain `.md` files you can open in
+any editor. Every interest gets a **topic** directory holding the full GOOP stack:
 
----
+- **Context** — what the system understands about your goal (`continuity.md`)
+- **Loops** — schedules and recurring runs
+- **Agents** — profiles that do the work
+- **Skills** — reusable procedures loaded on demand
 
-## Learn More
+Primitives nest: **Context** contains **Loops** which invoke **Agents** which load
+**Skills**. You steer by editing files; the system reports back through
+`injections.md`. **Intelligence lives in the artifacts, not the runtime** — the
+kernel, factory prompts, and rubrics were seeded by a frontier model so that any
+model running the ticks inherits their quality.
 
-- [[spec|Agent Wiki Specification]] — full architecture, setup, comparison to GOOP v1
-- [[goop-whitepaper|GOOP Whitepaper v1]] — the original architectural vision (July 2026)
-- [[goop-nesting|GOOP Nesting]] — primitive nesting hierarchy
+## How to use it (today, no setup)
 
----
+Open Claude Code in this directory and talk to it:
 
-*Built on [Hermes Agent](https://github.com/NousResearch/hermes-agent). Towards Self-Improvement.*
+```
+Drop thoughts into notes/inbox.md            ← your side of the API
+"run a context tick"                          ← comprehension → topics + queues
+"run a skills tick"                           ← builds queued capabilities
+"run an agents tick" / "run a loops tick"     ← designs; builds ONLY [approved] items
+"run a warden audit"                          ← the immune system reports
+```
+
+A good rhythm: drop notes all day → context tick in the evening → skim the queues →
+add `[approved]` to what you want built → run the other ticks → read
+`injections.md` over coffee.
+
+**Controls:** `touch KILL` at the vault root halts everything · a `PAUSED` file
+halts one topic · `log.md` is the append-only audit trail · git is the tamper record.
+
+## What v2 adds over the v1 spec
+
+| v1 (spec.md, Hermes, never run) | v2 (this vault, Claude Code, live) |
+|---|---|
+| Factories create agents & crons autonomously | **Human `[approved]` gate** on all agent/loop creation |
+| Chat text flows into instruction position | **KERNEL §1**: evidence is never instructions; injection attempts → Warden |
+| "No self-edit" stated, unenforced | Enumerated protected paths + **Fleet Warden** diffs them against git |
+| Unbounded proactive growth | Budgets: 3 agents/topic, 12 fleet, 2 loops/topic; 14-day rot review |
+| No stop mechanism | `KILL` / `PAUSED` files, checked before any read |
+| Watches your chat DB every 30 min | Reads an explicit drop-file (`notes/inbox.md`) — push, not surveillance |
+| 4 roles | 5 roles — the **Warden** is the one v1 forgot |
+
+## Vault layout
+
+```
+├── KERNEL.md              ← constitution (highest authority, human-edit only)
+├── GOOP2.md               ← port spec + runbook          ├── red-team.md  ← v1 review
+├── log.md                 ← append-only audit trail      ├── notes/inbox.md ← your drop-file
+├── .claude/agents/        ← 4 factories + fleet-warden   (protected paths)
+├── .claude/skills/goop-*  ← protocol + rubric            (protected paths)
+├── topics/
+│   ├── _global/           ← fleet dashboard + warden reports
+│   └── agent-wiki-itself/ ← bootstrap topic: the system maintains the system
+└── spec.md, goop-*.md, catalogs/  ← original v1 docs, preserved (marked superseded)
+```
+
+## Lineage
+
+- **GOOP** (Gentic Object-Oriented Programming) concept & v1 spec: Anser + sovthpaw,
+  July 2026, targeting [Hermes Agent](https://github.com/NousResearch/hermes-agent) — see
+  [goop-whitepaper.md](goop-whitepaper.md) and [spec.md](spec.md), preserved intact.
+- **v2 port, kernel, and seed**: built with Claude Fable 5 in Claude Code, 2026-07-11.
+
+*Towards self-improvement — with a constitution.*
